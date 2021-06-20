@@ -1,0 +1,73 @@
+clear
+
+num_bidder=2;
+
+ite=500;
+ite_est=150;
+prob=0:0.05:1;
+
+m_u_tru=zeros(1,length(prob));
+m_u_att=zeros(1,length(prob));
+u_tru=zeros(1,ite);
+u_att=zeros(1,ite);
+
+
+
+%req1
+value_vector=[1,1];
+for q=prob
+    u_est_att=-2*ones(11);
+    x_range=0:0.1:1;
+    for x=x_range
+        y_range=0:0.1:x;
+
+        for y=y_range
+            u_est=zeros(1,ite_est);
+            for i=1:ite_est
+                [v1,v2,w1]=get_v1_v2_w1(num_bidder,q,'Exponential',0.5);
+                u_est(i)=U_calculation(value_vector,[1,x;1,y],v1,v2,w1);
+            end
+            u_est_att(find(x_range==x),find(y_range==y))=mean(u_est);
+            
+        end
+    end
+    [lo_x,lo_y]=find(u_est_att==max(u_est_att(:)));
+    best_x(prob==q)=(lo_x(end)-1)/10;
+    best_y(prob==q)=(lo_y(end)-1)/10;
+end
+
+
+
+
+for q=prob
+    for i=1:ite
+        [v1,v2,w1]=get_v1_v2_w1(num_bidder,q,'Exponential',0.5);
+        u_tru(i)=U_calculation(value_vector,value_vector,v1,v2,w1);
+        
+        att_vector=[1,best_x(prob==q);1,best_y(prob==q)];
+        u=U_calculation(value_vector,att_vector,v1,v2,w1);
+        
+        u_att(i)=u;
+        
+    end
+    m_u_tru(prob==q)=mean(u_tru);
+    m_u_att(prob==q)=mean(u_att);
+end
+
+
+pft=m_u_att-m_u_tru;
+
+
+figure; plot(prob,pft);
+title('utility of sybil attack');
+xlabel('probability distribution of participant type');
+ylabel('expected utility');
+
+
+figure;
+plot(prob,best_x); hold on
+plot(prob,best_y); hold off
+title('strategy of best attack');
+legend('x','y');
+xlabel('probability distribution of participant type');
+ylabel('bid');
