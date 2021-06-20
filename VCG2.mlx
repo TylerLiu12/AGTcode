@@ -1,0 +1,73 @@
+clear
+
+num_bidder=10;
+
+ite=500;
+ite_est=150;
+prob=0:0.05:1;
+
+m_u_tru=zeros(1,length(prob));
+m_u_att=zeros(1,length(prob));
+u_tru=zeros(1,ite);
+u_att=zeros(1,ite);
+
+
+for value=0.4:0.2:1
+    %req2
+    value_vector=[2,value];
+    for q=prob
+        u_est_att=zeros(1,11);
+        n=0;
+        for y=0:0.1:1
+            n=n+1;
+            u_est=zeros(1,ite_est);
+            for i=1:ite_est
+                [v1,v2,w1]=get_v1_v2_w1(num_bidder,q,'Normal',0.5,1);
+                u_est(i)=U_calculation(value_vector,[1,1;1,y],v1,v2,w1);
+            end
+            u_est_att(n)=mean(u_est);
+        end
+        
+        lo_n=find(u_est_att==max(u_est_att));
+        
+        best_y(prob==q)=(lo_n(end)-1)/10;
+    end
+    
+    
+    
+    
+    for q=prob
+        for i=1:ite
+            [v1,v2,w1]=get_v1_v2_w1(num_bidder,q,'Normal',0.5,1);
+            u_tru(i)=U_calculation(value_vector,value_vector,v1,v2,w1);
+            
+            
+            bid_vector=[1,1;1,best_y(prob==q)];
+            u=U_calculation(value_vector,bid_vector,v1,v2,w1);
+            
+            u_att(i)=u;
+            
+            
+            
+        end
+        m_u_tru(prob==q)=mean(u_tru);
+        m_u_att(prob==q)=mean(u_att);
+    end
+    
+    
+    pft(value==0.4:0.2:1,:)=m_u_att-m_u_tru;
+    
+    
+    
+end
+for value=0.4:0.2:1
+    plot(prob,pft(value==0.4:0.2:1,:)); hold on
+    title('utility of sybil attack');
+    xlabel('probability distribution of participant type');
+    ylabel('expected utility');
+end
+legend('theta=0.4','theta=0.6','theta=0.8','theta=0.1');
+
+% figure;
+% 
+% plot(prob,best_y);
